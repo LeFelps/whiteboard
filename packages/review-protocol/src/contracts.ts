@@ -833,6 +833,10 @@ export const ReviewGatewayHostSchema = z.strictObject({
       detail: stringAllowEmpty,
     })
     .optional(),
+  // Its VS Code server answers through a forward and matches this Desktop.
+  languageFeatures: z.boolean().optional(),
+  // Why language features are unavailable.
+  languageFeaturesDetail: stringAllowEmpty.optional(),
 });
 
 export type ReviewGatewayHost = z.infer<typeof ReviewGatewayHostSchema>;
@@ -853,6 +857,9 @@ export interface ReviewGatewayHostState {
   detail?: string;
   /** For `incompatible` and `not-installed`: installs this Desktop's version. */
   installCommand?: string;
+  /** For `online`, as Desktop reported it. */
+  languageFeatures?: boolean;
+  languageFeaturesDetail?: string;
 }
 
 export const ReviewRepositoryIdentitySchema = z.strictObject({

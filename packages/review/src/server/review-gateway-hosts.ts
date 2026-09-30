@@ -62,6 +62,8 @@ interface Host extends GatewayRemote {
   agent?: http.Agent;
   unauthorized?: () => void;
   problem?: ReviewGatewayHost["problem"];
+  languageFeatures?: boolean;
+  languageFeaturesDetail?: string;
   serverId?: string;
   instanceId?: string;
   status: ReviewGatewayHostState["state"];
@@ -194,6 +196,7 @@ export function createGatewayHosts(input: {
       ...(INSTALLS.has(host.status) && {
         installCommand: `npm install -g @dev.fast/whiteboard@${input.version}`,
       }),
+      ...(host.status === "online" && languageOf(host)),
     };
   }
 
@@ -251,6 +254,7 @@ export function createGatewayHosts(input: {
       alias: given.alias,
       status: "connecting",
       retryMs: FIRST_RETRY_MS,
+      ...languageOf(given),
     };
 
     if (given.endpoint) host.endpoint = given.endpoint;
@@ -392,6 +396,8 @@ export function createGatewayHosts(input: {
         ) {
           previous.delete(given.alias);
           current.retryMs = FIRST_RETRY_MS;
+          current.languageFeatures = given.languageFeatures;
+          current.languageFeaturesDetail = given.languageFeaturesDetail;
           next.push(current);
         } else next.push(create(given));
       }
@@ -449,6 +455,15 @@ export function createGatewayHosts(input: {
 }
 
 export type GatewayHosts = ReturnType<typeof createGatewayHosts>;
+
+/** Only the language fields Desktop set. */
+const languageOf = ({
+  languageFeatures,
+  languageFeaturesDetail,
+}: Pick<ReviewGatewayHost, "languageFeatures" | "languageFeaturesDetail">) => ({
+  ...(languageFeatures !== undefined && { languageFeatures }),
+  ...(languageFeaturesDetail !== undefined && { languageFeaturesDetail }),
+});
 
 /** The headers every request to a remote carries. */
 export const remoteHeaders = (remote: GatewayRemote) => ({
