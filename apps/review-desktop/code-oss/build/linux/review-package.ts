@@ -103,7 +103,6 @@ exec ${share}/${app} "$@"
 		await mkdir(dirname(join(destination, path)), { recursive: true });
 		await symlink(target, join(destination, path));
 	};
-	await link(app, `usr/bin/${legacyApp}`);
 	await link(`${app}-desktop`, `usr/bin/${legacyApp}-desktop`);
 	await link(`${share}/${app}`, `usr/share/${legacyApp}/${legacyApp}`);
 	await link(`${share}/resources/app/review-runtime/dist/cli.js`, `usr/share/${legacyApp}/resources/app/review-runtime/dist/cli.js`);
@@ -199,7 +198,6 @@ if command -v gtk-update-icon-cache >/dev/null 2>&1; then gtk-update-icon-cache 
 %defattr(-,root,root)
 /usr/bin/${app}
 /usr/bin/${app}-desktop
-/usr/bin/${legacyApp}
 /usr/bin/${legacyApp}-desktop
 /usr/share/${legacyApp}/
 ${share}/
@@ -211,15 +209,9 @@ ${share}/
 `);
 }
 
-/** Stage the install tree for pacman without depending on an RPM. */
+/** Stage the same install tree for pacman without depending on an RPM. */
 export async function prepareReviewArchPackage(codeRoot: string): Promise<void> {
-	const destination = join(codeRoot, '.build/linux/arch/x86_64/package');
-	const { pkg } = await stageReviewPackage(codeRoot, destination);
-	if (pkg.legacyApp === 'review') {
-		// archlinux-contrib owns /usr/bin/review. Use the public whiteboard CLI
-		// instead of shipping a compatibility alias that prevents installation.
-		await rm(join(destination, 'usr/bin/review'));
-	}
+	await stageReviewPackage(codeRoot, join(codeRoot, '.build/linux/arch/x86_64/package'));
 }
 
 /** Keep rpmbuild state under the package output directory without changing HOME. */

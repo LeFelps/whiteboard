@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import {
+  lstat,
   mkdir,
   mkdtemp,
   readFile,
-  readlink,
   rm,
   stat,
   writeFile,
@@ -85,19 +85,9 @@ for (const quality of ["stable", "preview"]) {
       await readFile(path.join(staged, `usr/share/${app}/${app}`), "utf8"),
       "desktop",
     );
-
-    if (quality === "stable") {
-      // Arch's archlinux-contrib owns this unrelated command.
-      await assert.rejects(readlink(path.join(staged, "usr/bin/review")), {
-        code: "ENOENT",
-      });
-    } else {
-      assert.equal(
-        await readlink(path.join(staged, `usr/bin/review${suffix}`)),
-        app,
-      );
-    }
-
+    await assert.rejects(lstat(path.join(staged, `usr/bin/review${suffix}`)), {
+      code: "ENOENT",
+    });
     assert.equal(
       (await stat(path.join(staged, `usr/share/${app}/chrome-sandbox`))).mode &
         0o7777,
