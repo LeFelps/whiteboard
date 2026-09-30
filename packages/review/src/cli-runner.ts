@@ -533,12 +533,17 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
       .option(
         "--state-dir <path>",
         "directory for saved reviews and server discovery",
+      )
+      .option(
+        "--groups <groups>",
+        "comma-separated optional extension groups the Desktop has enabled, such as go",
       ),
     "plain",
   ).action(async (_options, command: Command) => {
     const options = command.optsWithGlobals<{
       stateDir?: string;
       json?: boolean;
+      groups?: string;
     }>();
 
     const stateDir = reviewServerStateDir(authoringEnv(options.stateDir));
@@ -549,7 +554,12 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
     let attach: Awaited<ReturnType<typeof remoteAttach>>;
 
     try {
-      attach = await remoteAttach({ stateDir, env, stderr: input.stderr });
+      attach = await remoteAttach({
+        stateDir,
+        env,
+        stderr: input.stderr,
+        groups: options.groups?.split(",").map((group) => group.trim()),
+      });
     } catch (error) {
       if (!options.json) throw error;
 
@@ -577,7 +587,7 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
     input.stdout.write(
       options.json
         ? `${REMOTE_ATTACH_BEGIN}\n${JSON.stringify(attach)}\n${REMOTE_ATTACH_END}\n`
-        : `Whiteboard server ${attach.startedServer ? "started" : "already running"} at ${attach.url}\nStructural diff: ${attach.diffr ? "available" : "unavailable (no diffr)"}\n`,
+        : `Whiteboard server ${attach.startedServer ? "started" : "already running"} at ${attach.url}\nStructural diff: ${attach.diffr ? "available" : "unavailable (no diffr)"}\nLanguage features: ${attach.languageServer ? `VS Code server on port ${attach.languageServer.port}` : `unavailable (${attach.languageServerDetail})`}\n`,
     );
   });
 
