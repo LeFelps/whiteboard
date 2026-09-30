@@ -85,10 +85,19 @@ for (const quality of ["stable", "preview"]) {
       await readFile(path.join(staged, `usr/share/${app}/${app}`), "utf8"),
       "desktop",
     );
-    assert.equal(
-      await readlink(path.join(staged, `usr/bin/review${suffix}`)),
-      app,
-    );
+
+    if (quality === "stable") {
+      // Arch's archlinux-contrib owns this unrelated command.
+      await assert.rejects(readlink(path.join(staged, "usr/bin/review")), {
+        code: "ENOENT",
+      });
+    } else {
+      assert.equal(
+        await readlink(path.join(staged, `usr/bin/review${suffix}`)),
+        app,
+      );
+    }
+
     assert.equal(
       (await stat(path.join(staged, `usr/share/${app}/chrome-sandbox`))).mode &
         0o7777,

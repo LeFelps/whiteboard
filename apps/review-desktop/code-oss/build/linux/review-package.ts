@@ -211,9 +211,15 @@ ${share}/
 `);
 }
 
-/** Stage the same install tree for pacman without depending on an RPM. */
+/** Stage the install tree for pacman without depending on an RPM. */
 export async function prepareReviewArchPackage(codeRoot: string): Promise<void> {
-	await stageReviewPackage(codeRoot, join(codeRoot, '.build/linux/arch/x86_64/package'));
+	const destination = join(codeRoot, '.build/linux/arch/x86_64/package');
+	const { pkg } = await stageReviewPackage(codeRoot, destination);
+	if (pkg.legacyApp === 'review') {
+		// archlinux-contrib owns /usr/bin/review. Use the public whiteboard CLI
+		// instead of shipping a compatibility alias that prevents installation.
+		await rm(join(destination, 'usr/bin/review'));
+	}
 }
 
 /** Keep rpmbuild state under the package output directory without changing HOME. */
